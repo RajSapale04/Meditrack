@@ -6,7 +6,7 @@ const passport =require("./config/passport");
 
 const {initDatabase}=require("./models/index");
 const authRoutes =require("./routes/auth");
-
+const profileRoutes =require("./routes/profile");
 dotenv.config();
 const app = express();
 initDatabase();
@@ -16,7 +16,7 @@ app.use(cookieParser());
 app.use(passport.initialize());
 
 app.use("/auth", authRoutes);
-
+app.use("/profiles", profileRoutes);
 
 // app.use('*', (req, res) => {
 //   res.status(404).json({ message: 'Route not found' });

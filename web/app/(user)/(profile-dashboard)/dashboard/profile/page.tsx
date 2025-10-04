@@ -22,19 +22,13 @@ import {
   Activity,
 } from "lucide-react"
 import { EditProfileDialog } from "@/components/profiles/edit-profile-dialog"
+import { useProfile } from "@/context/ProfileContext"
+import axios from "axios"
 
 interface Profile {
   id: string
   name: string
   age: number
-  relationship: string
-  avatar: string
-  email?: string
-  phone?: string
-  bloodType?: string
-  allergies?: string[]
-  emergencyContact?: string
-  notes?: string
 }
 
 interface TimelineEvent {
@@ -63,22 +57,22 @@ interface Medication {
 export default function ProfileDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const profileId = params.id as string
+  const {selectedProfile} = useProfile();
 
+  const handleEditProfile = async(updatedProfile: Omit<Profile, "id" >) => {
+    if (!selectedProfile) return
+    try {
+      const res = await axios.put(`http://localhost:5000/profiles/${selectedProfile.id}`, updatedProfile, { withCredentials: true });
+      setProfile(res.data);
+      console.log("Profile updated:", res.data);
+    } catch (err) {
+      console.error("Failed to edit profile", err);
+    } finally { 
+    setShowEditDialog(false)
+    }
+  }
   // Mock data - in real app this would come from API/database
-  const [profile] = useState<Profile>({
-    id: profileId,
-    name: "John Doe",
-    age: 45,
-    relationship: "Father",
-    avatar: "/middle-aged-man-contemplative.png",
-    email: "john.doe@email.com",
-    phone: "+1 (555) 123-4567",
-    bloodType: "O+",
-    allergies: ["Penicillin", "Shellfish"],
-    emergencyContact: "Sarah Doe - +1 (555) 987-6543",
-    notes: "Has history of hypertension. Regular checkups required.",
-  })
+  const [profile,setProfile] = useState<Profile|null>(selectedProfile)
 
   const [showEditDialog, setShowEditDialog] = useState(false)
 
@@ -193,7 +187,9 @@ export default function ProfileDetailPage() {
         return "bg-gray-100 text-gray-800 border-gray-200"
     }
   }
-
+  if(!profile) {
+    return <div>Loading...</div>
+  }
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -205,7 +201,7 @@ export default function ProfileDetailPage() {
         <div className="flex-1">
           <div className="flex items-center gap-4">
             <Avatar className="w-16 h-16">
-              <AvatarImage src={profile.avatar || "/placeholder.svg"} alt={profile.name} />
+              <AvatarImage src={"/placeholder.svg"} alt={profile.name} />
               <AvatarFallback className="text-lg">
                 {profile.name
                   .split(" ")
@@ -217,8 +213,6 @@ export default function ProfileDetailPage() {
               <h1 className="text-3xl font-serif font-bold text-foreground">{profile.name}</h1>
               <div className="flex items-center gap-4 text-muted-foreground mt-1">
                 <span>{profile.age} years old</span>
-                <span>•</span>
-                <span>{profile.relationship}</span>
               </div>
             </div>
           </div>
@@ -230,8 +224,7 @@ export default function ProfileDetailPage() {
       </div>
 
       {/* Profile Information */}
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Basic Info */}
+      {/* <div className="grid gap-6 md:grid-cols-3">
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="text-lg font-serif flex items-center gap-2">
@@ -261,7 +254,6 @@ export default function ProfileDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Health Info */}
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="text-lg font-serif flex items-center gap-2">
@@ -289,7 +281,6 @@ export default function ProfileDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Emergency Contact */}
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="text-lg font-serif">Emergency Contact</CardTitle>
@@ -302,10 +293,10 @@ export default function ProfileDetailPage() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       {/* Notes */}
-      {profile.notes && (
+      {/* {profile.notes && (
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="text-lg font-serif">Notes</CardTitle>
@@ -314,7 +305,7 @@ export default function ProfileDetailPage() {
             <p className="text-sm text-muted-foreground">{profile.notes}</p>
           </CardContent>
         </Card>
-      )}
+      )} */}
 
       {/* Tabs for detailed information */}
       <Tabs defaultValue="timeline" className="space-y-4">
@@ -463,10 +454,7 @@ export default function ProfileDetailPage() {
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
         profile={profile}
-        onUpdateProfile={(updatedProfile) => {
-          // Handle profile update
-          setShowEditDialog(false)
-        }}
+        onEditProfile={handleEditProfile}
       />
     </div>
   )

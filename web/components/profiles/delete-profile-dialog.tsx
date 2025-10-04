@@ -15,10 +15,6 @@ interface Profile {
   id: string
   name: string
   age: number
-  relationship: string
-  avatar?: string
-  medicationCount: number
-  lastMedication?: string
 }
 
 interface DeleteProfileDialogProps {
@@ -48,7 +44,6 @@ export function DeleteProfileDialog({ open, onOpenChange, profile, onDeleteProfi
             <p className="text-sm text-foreground">This action cannot be undone. This will permanently delete:</p>
             <ul className="text-sm text-muted-foreground mt-2 space-y-1">
               <li>• Profile information</li>
-              <li>• {profile?.medicationCount || 0} medication records</li>
               <li>• All prescription history</li>
               <li>• Medication reminders and schedules</li>
             </ul>

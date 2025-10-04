@@ -2,7 +2,6 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Work_Sans, Open_Sans } from "next/font/google"
 import "./globals.css"
-import { AuthProvider } from "@/context/AuthContext"
 
 const workSans = Work_Sans({
   subsets: ["latin"],
@@ -32,9 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${workSans.variable} ${openSans.variable}`}>
       <body className="font-sans antialiased">
-        <AuthProvider>
           {children}
-        </AuthProvider>
       </body>
     </html>
   )

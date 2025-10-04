@@ -21,7 +21,7 @@ const auth = async (req, res, next) => {
 
     req.user = user;
 
-    console.log('User authenticated:', user);
+    console.log('User authenticated:');
     next();
   } catch (error) {
     if (error.name === 'JsonWebTokenError') {

@@ -4,13 +4,13 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Heart, Home, Users, Stethoscope, Pill, Upload, Settings, LogOut } from "lucide-react"
+import { Heart, Home, User, Stethoscope, Pill, Upload, Settings, LogOut } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { useRouter } from "next/navigation"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "Profiles", href: "/dashboard/profiles", icon: Users },
+  { name: "Profile", href: "/dashboard/profile", icon: User },
   { name: "Doctors", href: "/dashboard/doctors", icon: Stethoscope },
   { name: "Medicines", href: "/dashboard/medicines", icon: Pill },
   { name: "Upload Prescription", href: "/dashboard/upload", icon: Upload },
@@ -64,13 +64,15 @@ export function DashboardSidebar() {
 
           {/* Bottom section */}
           <div className="p-4 border-t border-sidebar-border space-y-2">
+            <Link href="/profiles" className="block">
             <Button
               variant="ghost"
               className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent/50"
             >
               <Settings className="w-5 h-5" />
-              Settings
+              Change Profile
             </Button>
+            </Link>
             <Button
               variant="ghost"
               className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent/50"

@@ -1,9 +1,12 @@
 const sequelize = require('../config/db');
 const User = require('./User');
+const Profile = require('./Profile');
 
 // Define associations here if you have more models
 // User.hasMany(Post);
 // Post.belongsTo(User);
+User.hasMany(Profile, { foreignKey: "userId", as: "profiles" });
+Profile.belongsTo(User, { foreignKey: "userId", as: "user" });
 
 const initDatabase = async () => {
   try {
@@ -22,5 +25,6 @@ const initDatabase = async () => {
 module.exports = {
   sequelize,
   User,
+  Profile,
   initDatabase
 };

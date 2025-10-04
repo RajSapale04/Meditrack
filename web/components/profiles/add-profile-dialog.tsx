@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
 
 interface AddProfileDialogProps {
   open: boolean
@@ -22,8 +22,6 @@ interface AddProfileDialogProps {
   onAddProfile: (profile: {
     name: string
     age: number
-    relationship: string
-    avatar?: string
   }) => void
 }
 
@@ -31,22 +29,25 @@ export function AddProfileDialog({ open, onOpenChange, onAddProfile }: AddProfil
   const [formData, setFormData] = useState({
     name: "",
     age: "",
-    relationship: "",
   })
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isLoading, setIsLoading] = useState(false)
+  const handleSubmit =  async(e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.name || !formData.age || !formData.relationship) return
-
-    onAddProfile({
-      name: formData.name,
-      age: Number.parseInt(formData.age),
-      relationship: formData.relationship,
-      avatar: `/placeholder.svg?height=80&width=80&query=${formData.name.toLowerCase().replace(" ", "-")}`,
-    })
+    if (!formData.name || !formData.age) return
+    setIsLoading(true)
+    try {
+      await onAddProfile({
+        name: formData.name,
+        age: Number.parseInt(formData.age),
+      })
+      setFormData({ name: "", age: ""})
+    } catch (error) {
+      console.error("Failed to add profile", error)
+    } finally {
+      setIsLoading(false)
+    }
 
     // Reset form
-    setFormData({ name: "", age: "", relationship: "" })
   }
 
   const handleInputChange = (field: string, value: string) => {
@@ -85,33 +86,15 @@ export function AddProfileDialog({ open, onOpenChange, onAddProfile }: AddProfil
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="relationship">Relationship</Label>
-              <Select value={formData.relationship} onValueChange={(value) => handleInputChange("relationship", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select relationship" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Self">Self</SelectItem>
-                  <SelectItem value="Spouse">Spouse</SelectItem>
-                  <SelectItem value="Partner">Partner</SelectItem>
-                  <SelectItem value="Child">Child</SelectItem>
-                  <SelectItem value="Son">Son</SelectItem>
-                  <SelectItem value="Daughter">Daughter</SelectItem>
-                  <SelectItem value="Parent">Parent</SelectItem>
-                  <SelectItem value="Mother">Mother</SelectItem>
-                  <SelectItem value="Father">Father</SelectItem>
-                  <SelectItem value="Sibling">Sibling</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+           
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Add Profile</Button>
+            <Button type="submit" disabled={isLoading}>
+              Add Profile
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,102 +10,105 @@ import { Plus, Edit, Trash2, Eye } from "lucide-react"
 import { AddProfileDialog } from "@/components/profiles/add-profile-dialog"
 import { EditProfileDialog } from "@/components/profiles/edit-profile-dialog"
 import { DeleteProfileDialog } from "@/components/profiles/delete-profile-dialog"
+import axios from "axios"
+import { useProfile } from "@/context/ProfileContext"
+import { useRouter } from "next/navigation"
 
 interface Profile {
   id: string
   name: string
   age: number
-  relationship: string
-  avatar?: string
-  medicationCount: number
-  lastMedication?: string
 }
 
 export default function ProfilesPage() {
   // Mock data - in real app this would come from API/database
-  const [profiles, setProfiles] = useState<Profile[]>([
-    {
-      id: "1",
-      name: "John Doe",
-      age: 45,
-      relationship: "Self",
-      avatar: "/middle-aged-man-contemplative.png",
-      medicationCount: 3,
-      lastMedication: "Lisinopril - 2 hours ago",
-    },
-    {
-      id: "2",
-      name: "Sarah Doe",
-      age: 42,
-      relationship: "Spouse",
-      avatar: "/middle-aged-woman.png",
-      medicationCount: 2,
-      lastMedication: "Amoxicillin - 4 hours ago",
-    },
-    {
-      id: "3",
-      name: "Emma Doe",
-      age: 16,
-      relationship: "Daughter",
-      avatar: "/teenage-girl.png",
-      medicationCount: 1,
-      lastMedication: "Vitamin D3 - Yesterday",
-    },
-    {
-      id: "4",
-      name: "Michael Doe",
-      age: 12,
-      relationship: "Son",
-      avatar: "/young-boy.png",
-      medicationCount: 0,
-      lastMedication: undefined,
-    },
-  ])
+  const [profiles, setProfiles] = useState<Profile[]>([])
 
-  const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null)
+  const [chosenProfile, setChosenProfile] = useState<Profile | null>(null)
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const {setSelectedProfile} = useProfile();
+  const router = useRouter();
 
-  const handleAddProfile = (newProfile: Omit<Profile, "id" | "medicationCount" | "lastMedication">) => {
-    const profile: Profile = {
-      ...newProfile,
-      id: Date.now().toString(),
-      medicationCount: 0,
-      lastMedication: undefined,
+
+  const fetchProfiles = async () => {
+    setIsLoading(true)
+    try {
+      const res= await axios.get("http://localhost:5000/profiles", { withCredentials: true });
+      console.log("Profiles fetched:", res.data);
+      setProfiles(res.data);
+    }catch (err) {
+      console.error("Failed to fetch profiles", err);
+    }finally {
+      setIsLoading(false);
     }
-    setProfiles([...profiles, profile])
-    setShowAddDialog(false)
   }
 
-  const handleEditProfile = (updatedProfile: Omit<Profile, "id" | "medicationCount" | "lastMedication">) => {
-    if (!selectedProfile) return
-    setProfiles(
-      profiles.map((profile) => (profile.id === selectedProfile.id ? { ...profile, ...updatedProfile } : profile)),
-    )
+  useEffect(() => {
+    fetchProfiles()
+    // Fetch profiles from API or database
+    // For now, using static mock data
+    
+  }, [])
+  const selectProfile = (profile: Profile) => {
+    setSelectedProfile(profile);
+    router.push("/dashboard"); // redirect after choosing
+  };
+
+  const handleAddProfile = async(newProfile: Omit<Profile, "id" >) => {
+    try {
+      const res = await axios.post("http://localhost:5000/profiles", newProfile, { withCredentials: true });
+      setProfiles([...profiles, res.data]);
+      console.log("Profile added:", res.data);
+    } catch (err) {
+      console.error("Failed to add profile", err);
+    } finally {
+      setShowAddDialog(false)
+    }
+  }
+
+  const handleEditProfile = async(updatedProfile: Omit<Profile, "id" >) => {
+    if (!chosenProfile) return
+    try {
+      const res = await axios.put(`http://localhost:5000/profiles/${chosenProfile.id}`, updatedProfile, { withCredentials: true });
+      setProfiles(profiles.map((profile) => profile.id === chosenProfile.id ? res.data : profile));
+      console.log("Profile updated:", res.data);
+    } catch (err) {
+      console.error("Failed to edit profile", err);
+    } finally { 
     setShowEditDialog(false)
-    setSelectedProfile(null)
+    setChosenProfile(null)
+    }
   }
 
-  const handleDeleteProfile = () => {
-    if (!selectedProfile) return
-    setProfiles(profiles.filter((profile) => profile.id !== selectedProfile.id))
-    setShowDeleteDialog(false)
-    setSelectedProfile(null)
+  const handleDeleteProfile = async() => {
+    if (!chosenProfile) return
+    try {
+      await axios.delete(`http://localhost:5000/profiles/${chosenProfile.id}`, { withCredentials: true });
+      setProfiles(profiles.filter((profile) => profile.id !== chosenProfile.id))
+      console.log("Profile deleted:", chosenProfile.id);
+    } catch (err) {
+      console.error("Failed to delete profile", err);
+    } finally {
+      setShowDeleteDialog(false)
+      setChosenProfile(null)
+    }
   }
 
   const openEditDialog = (profile: Profile) => {
-    setSelectedProfile(profile)
+    setChosenProfile(profile)
     setShowEditDialog(true)
   }
 
   const openDeleteDialog = (profile: Profile) => {
-    setSelectedProfile(profile)
+    setChosenProfile(profile)
     setShowDeleteDialog(true)
   }
-
+  if (isLoading) return <p>Loading...</p>;
   return (
-    <div className="space-y-6">
+    <div className="p-16 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -125,7 +128,7 @@ export default function ProfilesPage() {
             <CardHeader className="text-center pb-4">
               <div className="flex justify-center mb-4">
                 <Avatar className="w-20 h-20">
-                  <AvatarImage src={profile.avatar || "/placeholder.svg"} alt={profile.name} />
+                  <AvatarImage src={ "/placeholder.svg"} alt={profile.name} />
                   <AvatarFallback className="text-lg">
                     {profile.name
                       .split(" ")
@@ -139,29 +142,17 @@ export default function ProfilesPage() {
                 <Badge variant="secondary" className="text-xs">
                   {profile.age} years old
                 </Badge>
-                <Badge variant="outline" className="text-xs">
-                  {profile.relationship}
-                </Badge>
+
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Medication Info */}
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">
-                  <span className="font-medium text-primary">{profile.medicationCount}</span> active medications
-                </p>
-                {profile.lastMedication && (
-                  <p className="text-xs text-muted-foreground mt-1">Last: {profile.lastMedication}</p>
-                )}
-              </div>
+
 
               {/* Action Buttons */}
               <div className="space-y-2">
-                <Button asChild className="w-full gap-2">
-                  <Link href={`/dashboard/profiles/${profile.id}`}>
+                <Button  className="w-full gap-2" onClick={() => selectProfile(profile)}>
                     <Eye className="w-3 h-3" />
-                    View Profile
-                  </Link>
+                    Select Profile
                 </Button>
                 <div className="flex gap-2">
                   <Button
@@ -208,14 +199,14 @@ export default function ProfilesPage() {
       <EditProfileDialog
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
-        profile={selectedProfile}
+        profile={chosenProfile}
         onEditProfile={handleEditProfile}
       />
 
       <DeleteProfileDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
-        profile={selectedProfile}
+        profile={chosenProfile}
         onDeleteProfile={handleDeleteProfile}
       />
     </div>

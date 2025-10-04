@@ -15,15 +15,12 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { set } from "date-fns"
 
 interface Profile {
   id: string
   name: string
   age: number
-  relationship: string
-  avatar?: string
-  medicationCount: number
-  lastMedication?: string
 }
 
 interface EditProfileDialogProps {
@@ -33,8 +30,6 @@ interface EditProfileDialogProps {
   onEditProfile: (profile: {
     name: string
     age: number
-    relationship: string
-    avatar?: string
   }) => void
 }
 
@@ -42,7 +37,6 @@ export function EditProfileDialog({ open, onOpenChange, profile, onEditProfile }
   const [formData, setFormData] = useState({
     name: "",
     age: "",
-    relationship: "",
   })
 
   useEffect(() => {
@@ -50,22 +44,30 @@ export function EditProfileDialog({ open, onOpenChange, profile, onEditProfile }
       setFormData({
         name: profile.name,
         age: profile.age.toString(),
-        relationship: profile.relationship,
       })
     }
   }, [profile])
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.name || !formData.age || !formData.relationship) return
+    if (!formData.name || !formData.age) return
 
-    onEditProfile({
-      name: formData.name,
-      age: Number.parseInt(formData.age),
-      relationship: formData.relationship,
-      avatar: `/placeholder.svg?height=80&width=80&query=${formData.name.toLowerCase().replace(" ", "-")}`,
-    })
+    setIsLoading(true)
+    try {
+      await onEditProfile({
+        name: formData.name,
+        age: Number.parseInt(formData.age),
+      })
+      setFormData({ name: "", age: "" })  
+    } catch (error) {
+      console.error("Failed to edit profile", error)
+    } finally {
+      setIsLoading(false)
+    }
   }
+
+
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -103,33 +105,15 @@ export function EditProfileDialog({ open, onOpenChange, profile, onEditProfile }
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-relationship">Relationship</Label>
-              <Select value={formData.relationship} onValueChange={(value) => handleInputChange("relationship", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select relationship" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Self">Self</SelectItem>
-                  <SelectItem value="Spouse">Spouse</SelectItem>
-                  <SelectItem value="Partner">Partner</SelectItem>
-                  <SelectItem value="Child">Child</SelectItem>
-                  <SelectItem value="Son">Son</SelectItem>
-                  <SelectItem value="Daughter">Daughter</SelectItem>
-                  <SelectItem value="Parent">Parent</SelectItem>
-                  <SelectItem value="Mother">Mother</SelectItem>
-                  <SelectItem value="Father">Father</SelectItem>
-                  <SelectItem value="Sibling">Sibling</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Save Changes</Button>
+            <Button type="submit" disabled={isLoading}>
+              Save Changes
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
