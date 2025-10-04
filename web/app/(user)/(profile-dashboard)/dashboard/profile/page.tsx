@@ -24,6 +24,7 @@ import {
 import { EditProfileDialog } from "@/components/profiles/edit-profile-dialog"
 import { useProfile } from "@/context/ProfileContext"
 import axios from "axios"
+import { extractLastTwoDigits } from "@/utils/utils"
 
 interface Profile {
   id: string
@@ -55,7 +56,6 @@ interface Medication {
 }
 
 export default function ProfileDetailPage() {
-  const params = useParams()
   const router = useRouter()
   const {selectedProfile} = useProfile();
 
@@ -190,6 +190,7 @@ export default function ProfileDetailPage() {
   if(!profile) {
     return <div>Loading...</div>
   }
+  console.log((extractLastTwoDigits(profile.id)%8).toString() + ".jpg")
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -201,7 +202,7 @@ export default function ProfileDetailPage() {
         <div className="flex-1">
           <div className="flex items-center gap-4">
             <Avatar className="w-16 h-16">
-              <AvatarImage src={"/placeholder.svg"} alt={profile.name} />
+              <AvatarImage src={(extractLastTwoDigits(profile.id)%8).toString() + ".jpg"} alt={profile.name} />
               <AvatarFallback className="text-lg">
                 {profile.name
                   .split(" ")

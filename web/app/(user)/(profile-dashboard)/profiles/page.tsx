@@ -13,6 +13,7 @@ import { DeleteProfileDialog } from "@/components/profiles/delete-profile-dialog
 import axios from "axios"
 import { useProfile } from "@/context/ProfileContext"
 import { useRouter } from "next/navigation"
+import { extractLastTwoDigits } from "@/utils/utils"
 
 interface Profile {
   id: string
@@ -128,7 +129,7 @@ export default function ProfilesPage() {
             <CardHeader className="text-center pb-4">
               <div className="flex justify-center mb-4">
                 <Avatar className="w-20 h-20">
-                  <AvatarImage src={ "/placeholder.svg"} alt={profile.name} />
+                  <AvatarImage src={ (extractLastTwoDigits(profile.id)%8).toString() + ".jpg"} alt={profile.name} />
                   <AvatarFallback className="text-lg">
                     {profile.name
                       .split(" ")
